@@ -11040,6 +11040,13 @@ const gray_matter_1 = __importDefault(__nccwpck_require__(9599));
 const ajv_1 = __importDefault(__nccwpck_require__(2463));
 // import addFormats from 'ajv-formats';
 const program = new commander_1.Command();
+// Debugging: Log environment state
+// console.log('[IntentSpec] Env Check:', { 
+//   GITHUB_ACTIONS: process.env.GITHUB_ACTIONS, 
+//   INPUT_FILE: process.env.INPUT_FILE 
+// });
+// Detect if running as GitHub Action
+const isGitHubAction = process.env.GITHUB_ACTIONS === 'true' || !!process.env.INPUT_FILE;
 program
     .name('intentspec')
     .description('One-stop tool for Spec-Driven Development')
@@ -11085,7 +11092,8 @@ program
     .argument('[file]', 'Path to the intent file', 'intent.md')
     .action(validateIntent);
 // Handle GitHub Actions context
-if (process.env.GITHUB_ACTIONS === 'true') {
+// Handle execution
+if (isGitHubAction) {
     const file = process.env.INPUT_FILE || 'intent.md';
     console.log(`[IntentSpec] Running in GitHub Actions. Validating: ${file}`);
     validateIntent(file).catch(err => {

@@ -17,6 +17,15 @@ import Ajv from 'ajv';
 
 const program = new Command();
 
+// Debugging: Log environment state
+// console.log('[IntentSpec] Env Check:', { 
+//   GITHUB_ACTIONS: process.env.GITHUB_ACTIONS, 
+//   INPUT_FILE: process.env.INPUT_FILE 
+// });
+
+// Detect if running as GitHub Action
+const isGitHubAction = process.env.GITHUB_ACTIONS === 'true' || !!process.env.INPUT_FILE;
+
 program
     .name('intentspec')
     .description('One-stop tool for Spec-Driven Development')
@@ -68,7 +77,8 @@ program
     .action(validateIntent);
 
 // Handle GitHub Actions context
-if (process.env.GITHUB_ACTIONS === 'true') {
+// Handle execution
+if (isGitHubAction) {
     const file = process.env.INPUT_FILE || 'intent.md';
     console.log(`[IntentSpec] Running in GitHub Actions. Validating: ${file}`);
     validateIntent(file).catch(err => {
