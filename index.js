@@ -11043,11 +11043,7 @@ program
     .name('intentspec')
     .description('One-stop tool for Spec-Driven Development')
     .version('0.0.1');
-program
-    .command('validate')
-    .description('Validate an intent.md file against the IntentSpec schema')
-    .argument('[file]', 'Path to the intent file', 'intent.md')
-    .action(async (file) => {
+const validateIntent = async (file) => {
     const filePath = path_1.default.resolve(process.cwd(), file);
     if (!fs_1.default.existsSync(filePath)) {
         console.error(chalk_1.default.red(`Error: File not found: ${filePath}`));
@@ -11062,7 +11058,6 @@ program
         const ajv = new ajv_1.default({
             allErrors: true
         });
-        // addFormats(ajv); // Removed to fix build error validation
         const validate = ajv.compile(schema);
         const valid = validate(data);
         if (valid) {
@@ -11082,13 +11077,20 @@ program
         console.error(chalk_1.default.red(`An error occurred: ${error.message}`));
         process.exit(1);
     }
-});
+};
+program
+    .command('validate')
+    .description('Validate an intent.md file against the IntentSpec schema')
+    .argument('[file]', 'Path to the intent file', 'intent.md')
+    .action(validateIntent);
 // Handle GitHub Actions context
 if (process.env.GITHUB_ACTIONS === 'true') {
     const file = process.env.INPUT_FILE || 'intent.md';
-    // Synthesize the command line arguments
-    const args = [process.argv[0], process.argv[1], 'validate', file];
-    program.parse(args);
+    console.log(`[IntentSpec] Running in GitHub Actions. Validating: ${file}`);
+    validateIntent(file).catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 }
 else {
     program.parse(process.argv);

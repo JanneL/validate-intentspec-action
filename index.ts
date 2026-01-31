@@ -21,56 +21,59 @@ program
     .description('One-stop tool for Spec-Driven Development')
     .version('0.0.1');
 
+const validateIntent = async (file: string) => {
+    const filePath = path.resolve(process.cwd(), file);
+    if (!fs.existsSync(filePath)) {
+        console.error(chalk.red(`Error: File not found: ${filePath}`));
+        process.exit(1);
+    }
+
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const { data } = matter(content);
+
+        // Load Schema
+        const schema = JSON.parse(fs.readFileSync(path.join(__dirname, 'schema.json'), 'utf-8'));
+
+        // Initialize AJV
+        const ajv = new Ajv({
+            allErrors: true
+        });
+
+        const validate = ajv.compile(schema);
+        const valid = validate(data);
+
+        if (valid) {
+            console.log(chalk.green(`✅ ${file} is a valid IntentSpec!`));
+            process.exit(0);
+        } else {
+            console.error(chalk.red(`❌ Invalid IntentSpec: ${file}`));
+            validate.errors?.forEach(err => {
+                const errorPath = (err as any).instancePath || (err as any).dataPath || 'Root';
+                console.error(chalk.yellow(`- ${errorPath} ${err.message}`));
+            });
+            process.exit(1);
+        }
+    } catch (error) {
+        console.error(chalk.red(`An error occurred: ${(error as Error).message}`));
+        process.exit(1);
+    }
+};
+
 program
     .command('validate')
     .description('Validate an intent.md file against the IntentSpec schema')
     .argument('[file]', 'Path to the intent file', 'intent.md')
-    .action(async (file) => {
-        const filePath = path.resolve(process.cwd(), file);
-        if (!fs.existsSync(filePath)) {
-            console.error(chalk.red(`Error: File not found: ${filePath}`));
-            process.exit(1);
-        }
-
-        try {
-            const content = fs.readFileSync(filePath, 'utf-8');
-            const { data } = matter(content);
-
-            // Load Schema
-            const schema = JSON.parse(fs.readFileSync(path.join(__dirname, 'schema.json'), 'utf-8'));
-
-            // Initialize AJV
-            const ajv = new Ajv({
-                allErrors: true
-            });
-            // addFormats(ajv); // Removed to fix build error validation
-
-            const validate = ajv.compile(schema);
-            const valid = validate(data);
-
-            if (valid) {
-                console.log(chalk.green(`✅ ${file} is a valid IntentSpec!`));
-                process.exit(0);
-            } else {
-                console.error(chalk.red(`❌ Invalid IntentSpec: ${file}`));
-                validate.errors?.forEach(err => {
-                    const errorPath = (err as any).instancePath || (err as any).dataPath || 'Root';
-                    console.error(chalk.yellow(`- ${errorPath} ${err.message}`));
-                });
-                process.exit(1);
-            }
-        } catch (error) {
-            console.error(chalk.red(`An error occurred: ${(error as Error).message}`));
-            process.exit(1);
-        }
-    });
+    .action(validateIntent);
 
 // Handle GitHub Actions context
 if (process.env.GITHUB_ACTIONS === 'true') {
     const file = process.env.INPUT_FILE || 'intent.md';
-    // Synthesize the command line arguments
-    const args = [process.argv[0], process.argv[1], 'validate', file];
-    program.parse(args);
+    console.log(`[IntentSpec] Running in GitHub Actions. Validating: ${file}`);
+    validateIntent(file).catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 } else {
     program.parse(process.argv);
 }
