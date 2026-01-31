@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+// import addFormats from 'ajv-formats';
 
 const program = new Command();
 
@@ -41,10 +41,9 @@ program
 
             // Initialize AJV
             const ajv = new Ajv({
-                allErrors: true,
-                strict: false
+                allErrors: true
             });
-            addFormats(ajv);
+            // addFormats(ajv); // Removed to fix build error validation
 
             const validate = ajv.compile(schema);
             const valid = validate(data);
@@ -55,7 +54,8 @@ program
             } else {
                 console.error(chalk.red(`❌ Invalid IntentSpec: ${file}`));
                 validate.errors?.forEach(err => {
-                    console.error(chalk.yellow(`- ${err.instancePath || 'Root'} ${err.message}`));
+                    const errorPath = (err as any).instancePath || (err as any).dataPath || 'Root';
+                    console.error(chalk.yellow(`- ${errorPath} ${err.message}`));
                 });
                 process.exit(1);
             }
