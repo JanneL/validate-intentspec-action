@@ -1,0 +1,13 @@
+name: 'Validate IntentSpec'
+description: 'Validate IntentSpec markdown files against the open standard'
+inputs:
+  file:
+    description: 'Path to the intent file'
+    required: false
+    default: 'intent.md'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+branding:
+  icon: 'check-circle'
+  color: 'purple'
