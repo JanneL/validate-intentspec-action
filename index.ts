@@ -3,6 +3,7 @@
 /**
  * IntentSpec CLI
  * The Open Standard for Spec-Driven Development
+ * v1.0.4
  */
 
 
