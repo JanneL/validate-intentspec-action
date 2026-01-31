@@ -11083,7 +11083,16 @@ program
         process.exit(1);
     }
 });
-program.parse();
+// Handle GitHub Actions context
+if (process.env.GITHUB_ACTIONS === 'true') {
+    const file = process.env.INPUT_FILE || 'intent.md';
+    // Synthesize the command line arguments
+    const args = [process.argv[0], process.argv[1], 'validate', file];
+    program.parse(args);
+}
+else {
+    program.parse(process.argv);
+}
 
 
 /***/ }),
